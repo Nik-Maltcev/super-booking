@@ -1,0 +1,161 @@
+import { useQueryClient } from '@tanstack/react-query'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { useCurrentLawyer } from '@/hooks/useLawyers'
+import { useAppointments } from '@/hooks/useAppointments'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { ErrorDisplay } from '@/components/ui/error-display'
+
+// Helper to format time
+function formatTime(time: string): string {
+  return time.slice(0, 5) // "HH:MM:SS" -> "HH:MM"
+}
+
+// Helper to get status badge
+function getStatusBadge(status: string): { label: string; className: string } {
+  switch (status) {
+    case 'pending':
+      return { label: 'Ожидает', className: 'bg-yellow-100 text-yellow-800' }
+    case 'confirmed':
+      return { label: 'Подтверждена', className: 'bg-green-100 text-green-800' }
+    case 'cancelled':
+      return { label: 'Отменена', className: 'bg-red-100 text-red-800' }
+    default:
+      return { label: status, className: 'bg-gray-100 text-gray-800' }
+  }
+}
+
+export function LawyerDashboard() {
+  const { user } = useAuthContext()
+  const queryClient = useQueryClient()
+  const { lawyer, isLoading: isLawyerLoading, error: lawyerError } = useCurrentLawyer(user?.id)
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0]
+  
+  const { appointments, isLoading: isAppointmentsLoading, error: appointmentsError } = useAppointments(
+    lawyer?.id ? { lawyer_id: lawyer.id, date: today } : undefined
+  )
+
+  const isLoading = isLawyerLoading || isAppointmentsLoading
+  const error = lawyerError || appointmentsError
+
+  const handleRetry = () => {
+    queryClient.invalidateQueries({ queryKey: ['lawyer', 'current'] })
+    queryClient.invalidateQueries({ queryKey: ['appointments'] })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Дашборд</h2>
+          <p className="text-gray-600">Записи на сегодня</p>
+        </div>
+        <ErrorDisplay 
+          error={error} 
+          onRetry={handleRetry}
+          title="Ошибка загрузки данных"
+        />
+      </div>
+    )
+  }
+
+  if (!lawyer) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <p className="text-center text-gray-500">
+            Профиль юриста не найден
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Sort appointments by time
+  const sortedAppointments = [...appointments].sort((a, b) => {
+    const timeA = a.time_slot?.start_time || ''
+    const timeB = b.time_slot?.start_time || ''
+    return timeA.localeCompare(timeB)
+  })
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Дашборд</h2>
+        <p className="text-gray-600">Записи на сегодня</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Записи на {new Date(today).toLocaleDateString('ru-RU', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sortedAppointments.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">
+              На сегодня записей нет
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Время</TableHead>
+                  <TableHead>Клиент</TableHead>
+                  <TableHead>Телефон</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Статус</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedAppointments.map((appointment) => {
+                  const status = getStatusBadge(appointment.status)
+                  return (
+                    <TableRow key={appointment.id}>
+                      <TableCell className="font-medium">
+                        {appointment.time_slot
+                          ? `${formatTime(appointment.time_slot.start_time)} - ${formatTime(appointment.time_slot.end_time)}`
+                          : '-'}
+                      </TableCell>
+                      <TableCell>{appointment.client_name}</TableCell>
+                      <TableCell>{appointment.client_phone}</TableCell>
+                      <TableCell>{appointment.client_email}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.className}`}
+                        >
+                          {status.label}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
