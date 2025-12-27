@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +13,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card'
 import { showErrorToast, getErrorMessage } from '@/lib/errors'
 
@@ -113,6 +114,14 @@ export function LoginForm() {
           </Button>
         </form>
       </CardContent>
+      <CardFooter className="flex justify-center">
+        <p className="text-sm text-muted-foreground">
+          Нет аккаунта?{' '}
+          <Link to="/register" className="text-primary hover:underline">
+            Зарегистрироваться
+          </Link>
+        </p>
+      </CardFooter>
     </Card>
   )
 }

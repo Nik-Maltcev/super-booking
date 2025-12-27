@@ -5,6 +5,7 @@ import { AdminLawyers, AdminAppointments } from '@/pages/admin'
 import { LawyerLayout, AdminLayout } from '@/components/layout'
 import { ProtectedRoute } from '@/components/auth'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { RegisterForm } from '@/components/auth/RegisterForm'
 import { Toaster } from '@/components/ui/sonner'
 
 // Public layout wrapper component
@@ -61,6 +62,14 @@ function App() {
           element={
             <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
               <LoginForm />
+            </div>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+              <RegisterForm />
             </div>
           }
         />

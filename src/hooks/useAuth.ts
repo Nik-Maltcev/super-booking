@@ -3,6 +3,26 @@ import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import type { User, UserRole } from '@/types'
 
+// Helper to generate slug from full name
+function generateSlug(fullName: string): string {
+  return fullName
+    .toLowerCase()
+    .replace(/[а-яё]/g, (char) => {
+      const map: Record<string, string> = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+        'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+      }
+      return map[char] || char
+    })
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 export interface UseAuthReturn {
   user: User | null
   supabaseUser: SupabaseUser | null
@@ -10,6 +30,7 @@ export interface UseAuthReturn {
   isLoading: boolean
   isAuthenticated: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
+  signUp: (email: string, password: string, fullName: string, specialization: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
 }
 
@@ -98,6 +119,67 @@ export function useAuth(): UseAuthReturn {
     setIsLoading(false)
   }, [])
 
+  // Sign up as lawyer
+  const signUp = useCallback(async (
+    email: string, 
+    password: string, 
+    fullName: string,
+    specialization: string
+  ) => {
+    setIsLoading(true)
+    
+    // 1. Create auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    })
+
+    if (authError) {
+      setIsLoading(false)
+      return { error: new Error(authError.message) }
+    }
+
+    if (!authData.user) {
+      setIsLoading(false)
+      return { error: new Error('Не удалось создать пользователя') }
+    }
+
+    const userId = authData.user.id
+    const slug = generateSlug(fullName) + '-' + Date.now().toString(36)
+
+    // 2. Create user profile
+    const { error: userError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        email,
+        role: 'lawyer',
+        full_name: fullName,
+      } as never)
+
+    if (userError) {
+      setIsLoading(false)
+      return { error: new Error(userError.message) }
+    }
+
+    // 3. Create lawyer profile
+    const { error: lawyerError } = await supabase
+      .from('lawyers')
+      .insert({
+        user_id: userId,
+        slug,
+        specialization,
+      } as never)
+
+    if (lawyerError) {
+      setIsLoading(false)
+      return { error: new Error(lawyerError.message) }
+    }
+
+    setIsLoading(false)
+    return { error: null }
+  }, [])
+
   return {
     user,
     supabaseUser,
@@ -105,6 +187,7 @@ export function useAuth(): UseAuthReturn {
     isLoading,
     isAuthenticated: !!supabaseUser,
     signIn,
+    signUp,
     signOut,
   }
 }

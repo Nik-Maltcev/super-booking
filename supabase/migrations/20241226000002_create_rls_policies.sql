@@ -21,6 +21,11 @@ CREATE POLICY "Users can update own profile" ON users
   FOR UPDATE
   USING (auth.uid() = id);
 
+-- Allow inserting own user profile during registration
+CREATE POLICY "Users can insert own profile" ON users
+  FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 -- ============================================
 -- LAWYERS TABLE POLICIES
 -- ============================================
@@ -34,6 +39,11 @@ CREATE POLICY "Anyone can view lawyers" ON lawyers
 CREATE POLICY "Lawyers can update own profile" ON lawyers
   FOR UPDATE
   USING (user_id = auth.uid());
+
+-- Allow inserting own lawyer profile during registration
+CREATE POLICY "Lawyers can insert own profile" ON lawyers
+  FOR INSERT
+  WITH CHECK (user_id = auth.uid());
 
 -- ============================================
 -- TIME_SLOTS TABLE POLICIES
