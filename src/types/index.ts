@@ -18,6 +18,7 @@ export interface User {
 export interface Lawyer {
   id: string
   user_id: string
+  slug: string | null
   specialization: string
   bio: string | null
   avatar_url: string | null

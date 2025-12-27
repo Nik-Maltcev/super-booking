@@ -1,36 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { TimeSlotPicker } from '@/components/booking/TimeSlotPicker'
 import { BookingForm, type BookingFormData } from '@/components/booking/BookingForm'
 import { Button } from '@/components/ui/button'
 import { useTimeSlots } from '@/hooks/useTimeSlots'
 import { useAppointments } from '@/hooks/useAppointments'
+import { useLawyer } from '@/hooks/useLawyers'
 import { showSuccessToast, showErrorToast, showWarningToast } from '@/lib/errors'
 import { ErrorDisplay } from '@/components/ui/error-display'
-import type { Lawyer, TimeSlot } from '@/types'
-
-async function fetchLawyer(id: string): Promise<Lawyer | null> {
-  const { data, error } = await supabase
-    .from('lawyers')
-    .select(`
-      *,
-      user:users(*)
-    `)
-    .eq('id', id)
-    .single()
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return null
-    }
-    throw new Error(error.message)
-  }
-
-  return data as unknown as Lawyer
-}
+import type { TimeSlot } from '@/types'
 
 export function BookingPage() {
   const { lawyerId } = useParams<{ lawyerId: string }>()
@@ -40,16 +20,12 @@ export function BookingPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
 
-  // Fetch lawyer info
-  const { data: lawyer, isLoading: isLoadingLawyer, error: lawyerError } = useQuery({
-    queryKey: ['lawyer', lawyerId],
-    queryFn: () => fetchLawyer(lawyerId!),
-    enabled: !!lawyerId,
-  })
+  // Fetch lawyer info by ID or slug
+  const { lawyer, isLoading: isLoadingLawyer, error: lawyerError } = useLawyer(lawyerId)
 
-  // Fetch time slots
+  // Fetch time slots (use lawyer.id for queries)
   const { slots, availableDates, isLoading: isLoadingSlots, error: slotsError } = useTimeSlots({
-    lawyer_id: lawyerId!,
+    lawyer_id: lawyer?.id || '',
     date: selectedDate?.toISOString().split('T')[0],
     is_available: true, // Only show available slots (Requirements 2.5)
   })
@@ -193,7 +169,7 @@ export function BookingPage() {
 
       {/* Time Slot Picker */}
       <TimeSlotPicker
-        lawyerId={lawyerId!}
+        lawyerId={lawyer.id}
         selectedDate={selectedDate}
         onDateSelect={handleDateSelect}
         selectedSlot={selectedSlot}
@@ -206,7 +182,7 @@ export function BookingPage() {
       {/* Booking Form */}
       <BookingForm
         timeSlot={selectedSlot}
-        lawyerId={lawyerId!}
+        lawyerId={lawyer.id}
         onSubmit={handleSubmit}
         isSubmitting={isCreating}
       />

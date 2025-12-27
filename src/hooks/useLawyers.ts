@@ -103,6 +103,36 @@ async function fetchLawyerByUserId(userId: string): Promise<Lawyer | null> {
   return data as unknown as Lawyer
 }
 
+// Fetch lawyer by ID or slug (for booking page)
+async function fetchLawyerByIdOrSlug(idOrSlug: string): Promise<Lawyer | null> {
+  // First try by UUID
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug)
+  
+  let query = supabase
+    .from('lawyers')
+    .select(`
+      *,
+      user:users(*)
+    `)
+  
+  if (isUUID) {
+    query = query.eq('id', idOrSlug)
+  } else {
+    query = query.eq('slug', idOrSlug)
+  }
+  
+  const { data, error } = await query.single()
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null
+    }
+    throw new Error(error.message)
+  }
+
+  return data as unknown as Lawyer
+}
+
 export function useLawyers() {
   const { data: lawyers = [], isLoading, error } = useQuery({
     queryKey: ['lawyers'],
@@ -143,6 +173,22 @@ export function useLawyersWithStats() {
 
   return {
     lawyers,
+    isLoading,
+    error: error as Error | null,
+  }
+}
+
+// Hook to get lawyer by ID or slug (for booking page)
+export function useLawyer(idOrSlug: string | undefined) {
+  const { data: lawyer, isLoading, error } = useQuery({
+    queryKey: ['lawyer', idOrSlug],
+    queryFn: () => fetchLawyerByIdOrSlug(idOrSlug!),
+    enabled: !!idOrSlug,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  return {
+    lawyer,
     isLoading,
     error: error as Error | null,
   }

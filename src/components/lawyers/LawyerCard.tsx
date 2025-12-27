@@ -4,12 +4,14 @@ import type { Lawyer } from '@/types'
 
 interface LawyerCardProps {
   lawyer: Lawyer
-  onClick: (lawyerId: string) => void
+  onClick: (lawyerIdOrSlug: string) => void
 }
 
 export function LawyerCard({ lawyer, onClick }: LawyerCardProps) {
   const fullName = lawyer.user?.full_name || 'Юрист'
   const avatarUrl = lawyer.avatar_url || '/placeholder-avatar.png'
+  // Use slug if available, otherwise use ID
+  const bookingLink = lawyer.slug || lawyer.id
 
   return (
     <Card className="cursor-pointer hover:shadow-md transition-shadow">
@@ -37,7 +39,7 @@ export function LawyerCard({ lawyer, onClick }: LawyerCardProps) {
       )}
       <CardContent className="pt-0">
         <Button 
-          onClick={() => onClick(lawyer.id)} 
+          onClick={() => onClick(bookingLink)} 
           className="w-full"
         >
           Записаться на консультацию

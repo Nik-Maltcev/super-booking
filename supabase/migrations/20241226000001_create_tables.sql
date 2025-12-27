@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS lawyers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  slug TEXT UNIQUE,
   specialization TEXT NOT NULL,
   bio TEXT,
   avatar_url TEXT,
