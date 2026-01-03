@@ -147,29 +147,25 @@ export function useAuth(): UseAuthReturn {
     const userId = authData.user.id
     const slug = generateSlug(fullName) + '-' + Date.now().toString(36)
 
-    // 2. Create user profile
-    const { error: userError } = await supabase
-      .from('users')
-      .insert({
-        id: userId,
-        email,
-        role: 'lawyer',
-        full_name: fullName,
-      } as never)
+    // 2. Create user profile using RPC (bypasses RLS)
+    const { error: userError } = await supabase.rpc('create_user_profile', {
+      user_id: userId,
+      user_email: email,
+      user_full_name: fullName,
+      user_role: 'lawyer'
+    })
 
     if (userError) {
       setIsLoading(false)
       return { error: new Error(userError.message) }
     }
 
-    // 3. Create lawyer profile
-    const { error: lawyerError } = await supabase
-      .from('lawyers')
-      .insert({
-        user_id: userId,
-        slug,
-        specialization,
-      } as never)
+    // 3. Create lawyer profile using RPC (bypasses RLS)
+    const { error: lawyerError } = await supabase.rpc('create_lawyer_profile', {
+      lawyer_user_id: userId,
+      lawyer_slug: slug,
+      lawyer_specialization: specialization
+    })
 
     if (lawyerError) {
       setIsLoading(false)
