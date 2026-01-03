@@ -35,8 +35,10 @@ export function TimeSlotPicker({
   // Filter slots for the selected date
   const slotsForSelectedDate = useMemo(() => {
     if (!selectedDate) return []
+    // Format selected date as YYYY-MM-DD string for comparison
+    const selectedDateStr = format(selectedDate, 'yyyy-MM-dd')
     return slots.filter(slot => 
-      isSameDay(parseISO(slot.date), selectedDate) && slot.is_available
+      slot.date === selectedDateStr && slot.is_available
     )
   }, [slots, selectedDate])
 
