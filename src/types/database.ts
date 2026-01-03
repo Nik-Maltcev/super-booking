@@ -39,6 +39,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          slug: string
           specialization: string
           bio: string | null
           avatar_url: string | null
@@ -46,6 +47,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          slug: string
           specialization: string
           bio?: string | null
           avatar_url?: string | null
@@ -53,6 +55,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          slug?: string
           specialization?: string
           bio?: string | null
           avatar_url?: string | null

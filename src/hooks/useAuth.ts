@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import type { User, UserRole } from '@/types'
+import type { Database } from '@/types/database'
+
+type UserInsert = Database['public']['Tables']['users']['Insert']
+type LawyerInsert = Database['public']['Tables']['lawyers']['Insert']
 
 // Helper to generate slug from full name
 function generateSlug(fullName: string): string {
@@ -153,9 +157,9 @@ export function useAuth(): UseAuthReturn {
       .insert({
         id: userId,
         email,
-        role: 'lawyer' as const,
+        role: 'lawyer',
         full_name: fullName,
-      })
+      } as UserInsert)
 
     if (userError) {
       setIsLoading(false)
@@ -169,7 +173,7 @@ export function useAuth(): UseAuthReturn {
         user_id: userId,
         slug,
         specialization,
-      })
+      } as LawyerInsert)
 
     if (lawyerError) {
       setIsLoading(false)
