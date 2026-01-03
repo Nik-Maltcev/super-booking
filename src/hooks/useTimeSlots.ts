@@ -3,6 +3,11 @@ import { supabase } from '@/lib/supabase'
 import type { TimeSlot, CreateTimeSlotInput, TimeSlotFilters } from '@/types'
 
 async function fetchTimeSlots(filters: TimeSlotFilters): Promise<TimeSlot[]> {
+  // Don't fetch if no lawyer_id
+  if (!filters.lawyer_id) {
+    return []
+  }
+
   let query = supabase
     .from('time_slots')
     .select('*')
@@ -29,6 +34,11 @@ async function fetchTimeSlots(filters: TimeSlotFilters): Promise<TimeSlot[]> {
 }
 
 async function fetchAvailableDates(lawyerId: string): Promise<string[]> {
+  // Don't fetch if no lawyerId
+  if (!lawyerId) {
+    return []
+  }
+
   const { data, error } = await supabase
     .from('time_slots')
     .select('date')
@@ -136,13 +146,15 @@ export function useTimeSlots(filters: TimeSlotFilters) {
   const { data: slots = [], isLoading, error } = useQuery({
     queryKey: ['timeSlots', filters],
     queryFn: () => fetchTimeSlots(filters),
-    staleTime: 1 * 60 * 1000, // 1 minute
+    enabled: !!filters.lawyer_id, // Only fetch when lawyer_id is available
+    staleTime: 30 * 1000, // 30 seconds - shorter for real-time updates
   })
 
   const { data: availableDates = [] } = useQuery({
     queryKey: ['availableDates', filters.lawyer_id],
     queryFn: () => fetchAvailableDates(filters.lawyer_id),
-    staleTime: 1 * 60 * 1000,
+    enabled: !!filters.lawyer_id, // Only fetch when lawyer_id is available
+    staleTime: 30 * 1000, // 30 seconds
   })
 
   const createSlotMutation = useMutation({
