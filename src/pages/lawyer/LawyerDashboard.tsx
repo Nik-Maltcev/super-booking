@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useCurrentLawyer } from '@/hooks/useLawyers'
 import { useAppointments } from '@/hooks/useAppointments'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -36,6 +39,7 @@ export function LawyerDashboard() {
   const { user } = useAuthContext()
   const queryClient = useQueryClient()
   const { lawyer, isLoading: isLawyerLoading, error: lawyerError } = useCurrentLawyer(user?.id)
+  const [copied, setCopied] = useState(false)
   
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0]
@@ -46,6 +50,19 @@ export function LawyerDashboard() {
 
   const isLoading = isLawyerLoading || isAppointmentsLoading
   const error = lawyerError || appointmentsError
+
+  // Generate booking link
+  const bookingLink = lawyer?.id 
+    ? `${window.location.origin}/booking/${lawyer.id}`
+    : ''
+
+  const handleCopyLink = async () => {
+    if (bookingLink) {
+      await navigator.clipboard.writeText(bookingLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   const handleRetry = () => {
     queryClient.invalidateQueries({ queryKey: ['lawyer', 'current'] })
@@ -101,6 +118,34 @@ export function LawyerDashboard() {
         <h2 className="text-2xl font-bold text-gray-900">Дашборд</h2>
         <p className="text-gray-600">Записи на сегодня</p>
       </div>
+
+      {/* Персональная ссылка для записи */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Ваша ссылка для записи</CardTitle>
+          <CardDescription>
+            Поделитесь этой ссылкой с клиентами для записи на консультацию
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Input 
+              value={bookingLink} 
+              readOnly 
+              className="flex-1 bg-gray-50"
+            />
+            <Button onClick={handleCopyLink} variant="outline">
+              {copied ? '✓ Скопировано' : 'Копировать'}
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => window.open(bookingLink, '_blank')}
+            >
+              Открыть
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
