@@ -159,7 +159,7 @@ export function useAuth(): UseAuthReturn {
         email,
         role: 'lawyer',
         full_name: fullName,
-      } as UserInsert)
+      } as any)
 
     if (userError) {
       setIsLoading(false)
@@ -173,7 +173,7 @@ export function useAuth(): UseAuthReturn {
         user_id: userId,
         slug,
         specialization,
-      } as LawyerInsert)
+      } as any)
 
     if (lawyerError) {
       setIsLoading(false)
