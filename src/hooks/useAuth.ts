@@ -2,10 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import type { User, UserRole } from '@/types'
-import type { Database } from '@/types/database'
-
-type UserInsert = Database['public']['Tables']['users']['Insert']
-type LawyerInsert = Database['public']['Tables']['lawyers']['Insert']
 
 // Helper to generate slug from full name
 function generateSlug(fullName: string): string {
