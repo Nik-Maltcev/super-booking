@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
+import { format } from 'date-fns'
 import { TimeSlotPicker } from '@/components/booking/TimeSlotPicker'
 import { BookingForm, type BookingFormData } from '@/components/booking/BookingForm'
 import { Button } from '@/components/ui/button'
@@ -26,7 +27,7 @@ export function BookingPage() {
   // Fetch time slots (use lawyer.id for queries)
   const { slots, availableDates, isLoading: isLoadingSlots, error: slotsError } = useTimeSlots({
     lawyer_id: lawyer?.id || '',
-    date: selectedDate?.toISOString().split('T')[0],
+    date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined,
     is_available: true, // Only show available slots (Requirements 2.5)
   })
 
