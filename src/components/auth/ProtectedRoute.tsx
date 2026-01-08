@@ -33,12 +33,17 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       return <>{children}</>
     }
 
-    // Lawyer trying to access superadmin routes - redirect to lawyer dashboard
+    // Lawyer trying to access non-lawyer routes - redirect to lawyer dashboard
     if (role === 'lawyer') {
       return <Navigate to="/lawyer/dashboard" replace />
     }
 
-    // Client trying to access protected routes - redirect to home
+    // Client trying to access non-client routes - redirect to client dashboard
+    if (role === 'client') {
+      return <Navigate to="/client/dashboard" replace />
+    }
+
+    // Default - redirect to home
     return <Navigate to="/" replace />
   }
 

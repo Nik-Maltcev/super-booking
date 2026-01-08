@@ -1,8 +1,8 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { CheckCircle, Calendar, Clock, User, Mail, Phone, MessageSquare } from 'lucide-react'
+import { CheckCircle, Calendar, Clock, User, Mail, Phone, MessageSquare, Key } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAppointment } from '@/hooks/useAppointments'
@@ -10,6 +10,8 @@ import { ErrorDisplay } from '@/components/ui/error-display'
 
 export function ConfirmationPage() {
   const { appointmentId } = useParams<{ appointmentId: string }>()
+  const [searchParams] = useSearchParams()
+  const generatedPassword = searchParams.get('password')
   const queryClient = useQueryClient()
   
   const { appointment, isLoading, error } = useAppointment(appointmentId!)
@@ -72,6 +74,41 @@ export function ConfirmationPage() {
           Ваша заявка на консультацию принята и ожидает подтверждения.
         </p>
       </div>
+
+      {/* Generated Password Card */}
+      {generatedPassword && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-900">
+              <Key className="h-5 w-5" />
+              Ваш личный кабинет создан
+            </CardTitle>
+            <CardDescription>
+              Для вас автоматически создан личный кабинет. Сохраните эти данные для входа.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="p-4 bg-white rounded-lg border border-green-200">
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Email:</p>
+                  <p className="font-mono font-medium">{appointment?.client_email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Пароль:</p>
+                  <p className="font-mono font-medium text-lg">{generatedPassword}</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              💡 Сохраните пароль в надёжном месте. В личном кабинете вы сможете просматривать свои записи.
+            </p>
+            <Button asChild className="w-full">
+              <Link to="/login">Войти в личный кабинет</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Appointment Details */}
       <Card>

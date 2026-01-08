@@ -2,6 +2,73 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Appointment, CreateAppointmentInput, AppointmentFilters } from '@/types'
 
+// Generate random password (8 characters)
+function generatePassword(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let password = ''
+  for (let i = 0; i < 8; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return password
+}
+
+// Check if user exists by email
+async function checkUserExists(email: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', email)
+    .single()
+  
+  return !!data
+}
+
+// Create client account (without email confirmation)
+async function createClientAccount(
+  email: string, 
+  fullName: string, 
+  phone: string
+): Promise<{ userId: string; password: string } | null> {
+  const password = generatePassword()
+  
+  // Create auth user
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+      },
+    },
+  })
+
+  if (authError || !authData.user) {
+    console.error('Error creating client auth:', authError)
+    return null
+  }
+
+  // Create user profile
+  const { error: userError } = await supabase
+    .from('users')
+    .insert({
+      id: authData.user.id,
+      email,
+      role: 'client',
+      full_name: fullName,
+      phone,
+    } as any)
+
+  if (userError) {
+    console.error('Error creating client profile:', userError)
+    return null
+  }
+
+  // Sign out immediately (client doesn't need to be logged in)
+  await supabase.auth.signOut()
+
+  return { userId: authData.user.id, password }
+}
+
 async function fetchAppointments(filters?: AppointmentFilters): Promise<Appointment[]> {
   let query = supabase
     .from('appointments')
@@ -74,8 +141,26 @@ async function fetchAppointmentById(id: string): Promise<Appointment | null> {
 
 // Create appointment with status "pending" (Requirements 3.2)
 // Mark time slot as unavailable (Requirements 3.3)
-async function createAppointment(input: CreateAppointmentInput): Promise<Appointment> {
-  // First, create the appointment with status "pending"
+// Auto-create client account if not exists
+async function createAppointment(input: CreateAppointmentInput): Promise<Appointment & { generatedPassword?: string }> {
+  let generatedPassword: string | undefined
+
+  // Check if client already has an account
+  const userExists = await checkUserExists(input.client_email)
+  
+  if (!userExists) {
+    // Create client account
+    const result = await createClientAccount(
+      input.client_email,
+      input.client_name,
+      input.client_phone
+    )
+    if (result) {
+      generatedPassword = result.password
+    }
+  }
+
+  // Create the appointment with status "pending"
   const { data: appointment, error: appointmentError } = await supabase
     .from('appointments')
     .insert({
@@ -105,7 +190,10 @@ async function createAppointment(input: CreateAppointmentInput): Promise<Appoint
     throw new Error(slotError.message)
   }
 
-  return appointment as unknown as Appointment
+  return { 
+    ...(appointment as unknown as Appointment), 
+    generatedPassword 
+  }
 }
 
 async function cancelAppointment(id: string): Promise<void> {

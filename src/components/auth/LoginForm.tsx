@@ -63,6 +63,8 @@ export function LoginForm() {
     navigate('/lawyer/dashboard', { replace: true })
   } else if (role === 'superadmin') {
     navigate('/admin/lawyers', { replace: true })
+  } else if (role === 'client') {
+    navigate('/client/dashboard', { replace: true })
   }
 
   return (

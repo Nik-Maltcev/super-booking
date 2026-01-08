@@ -69,7 +69,13 @@ export function BookingPage() {
       })
 
       showSuccessToast('Запись успешно создана!')
-      navigate(`/confirmation/${appointment.id}`)
+      
+      // Navigate with password if generated
+      if (appointment.generatedPassword) {
+        navigate(`/confirmation/${appointment.id}?password=${appointment.generatedPassword}`)
+      } else {
+        navigate(`/confirmation/${appointment.id}`)
+      }
     } catch (error) {
       showErrorToast(error)
     }
