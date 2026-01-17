@@ -1,22 +1,27 @@
--- Fix RLS policy for users table to allow registration
+-- Fix RLS policy and trigger for users table
 -- Run this in Supabase SQL Editor
 
--- Drop the existing policy
+-- Drop the existing policies
 DROP POLICY IF EXISTS "Users can insert own profile" ON users;
+DROP POLICY IF EXISTS "Allow insert during registration" ON users;
 
--- Create new policy - allow authenticated users to insert their own profile
+-- Create policy for authenticated users
 CREATE POLICY "Users can insert own profile" ON users
   FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = id);
 
--- Also create a policy for anon users during registration
+-- Create policy for anon users during registration
 CREATE POLICY "Allow insert during registration" ON users
   FOR INSERT
   TO anon
   WITH CHECK (true);
 
--- Create a trigger to auto-create user profile (with phone support)
+-- Drop existing trigger and function
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+
+-- Create improved trigger function with ON CONFLICT to prevent duplicates
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -27,15 +32,13 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     NEW.raw_user_meta_data->>'phone'
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Drop existing trigger if exists
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-
--- Create trigger to auto-create user profile on signup
+-- Create trigger
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

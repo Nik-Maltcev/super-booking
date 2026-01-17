@@ -155,6 +155,9 @@ export function useAuth(): UseAuthReturn {
     const userId = authData.user.id
 
     // 2. Create lawyer profile (user profile is created by trigger)
+    // Small delay to ensure trigger has completed
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
     const { error: lawyerError } = await supabase
       .from('lawyers')
       .insert({
