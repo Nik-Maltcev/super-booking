@@ -155,7 +155,7 @@ export function useAuth(): UseAuthReturn {
         email,
         role: 'lawyer',
         full_name: fullName,
-      } as any)
+      } as never)
 
     if (userError) {
       setIsLoading(false)
@@ -169,7 +169,7 @@ export function useAuth(): UseAuthReturn {
         user_id: userId,
         slug,
         specialization,
-      } as any)
+      } as never)
 
     if (lawyerError) {
       setIsLoading(false)
