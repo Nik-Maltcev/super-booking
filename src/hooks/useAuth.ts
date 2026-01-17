@@ -128,10 +128,18 @@ export function useAuth(): UseAuthReturn {
   ) => {
     setIsLoading(true)
     
-    // 1. Create auth user
+    const slug = generateSlug(fullName) + '-' + Date.now().toString(36)
+
+    // 1. Create auth user with metadata (trigger will create user profile)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: fullName,
+          role: 'lawyer',
+        },
+      },
     })
 
     if (authError) {
@@ -145,24 +153,8 @@ export function useAuth(): UseAuthReturn {
     }
 
     const userId = authData.user.id
-    const slug = generateSlug(fullName) + '-' + Date.now().toString(36)
 
-    // 2. Create user profile
-    const { error: userError } = await supabase
-      .from('users')
-      .insert({
-        id: userId,
-        email,
-        role: 'lawyer',
-        full_name: fullName,
-      } as never)
-
-    if (userError) {
-      setIsLoading(false)
-      return { error: new Error(userError.message) }
-    }
-
-    // 3. Create lawyer profile
+    // 2. Create lawyer profile (user profile is created by trigger)
     const { error: lawyerError } = await supabase
       .from('lawyers')
       .insert({

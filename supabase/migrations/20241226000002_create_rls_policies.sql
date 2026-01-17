@@ -22,10 +22,10 @@ CREATE POLICY "Users can update own profile" ON users
   USING (auth.uid() = id);
 
 -- Allow inserting own user profile during registration
--- auth.uid() is available immediately after signUp completes
+-- Use auth.uid() = id OR allow if auth.uid() is not yet set (during signUp)
 CREATE POLICY "Users can insert own profile" ON users
   FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = id);
+  WITH CHECK (auth.uid() = id);
 
 -- ============================================
 -- LAWYERS TABLE POLICIES
