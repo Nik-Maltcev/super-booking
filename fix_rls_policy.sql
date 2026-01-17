@@ -5,31 +5,28 @@
 DROP POLICY IF EXISTS "Users can insert own profile" ON users;
 
 -- Create new policy - allow authenticated users to insert their own profile
--- OR allow service role (for triggers)
 CREATE POLICY "Users can insert own profile" ON users
   FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = id);
 
 -- Also create a policy for anon users during registration
--- This allows the insert right after signUp before session is fully established
 CREATE POLICY "Allow insert during registration" ON users
   FOR INSERT
   TO anon
   WITH CHECK (true);
 
--- Better approach: Create a trigger to auto-create user profile
--- This runs with SECURITY DEFINER so it bypasses RLS
-
+-- Create a trigger to auto-create user profile (with phone support)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, role, full_name)
+  INSERT INTO public.users (id, email, role, full_name, phone)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
-    COALESCE(NEW.raw_user_meta_data->>'full_name', '')
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    NEW.raw_user_meta_data->>'phone'
   );
   RETURN NEW;
 END;

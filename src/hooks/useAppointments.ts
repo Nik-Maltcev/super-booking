@@ -31,13 +31,15 @@ async function createClientAccount(
 ): Promise<{ userId: string; password: string } | null> {
   const password = generatePassword()
   
-  // Create auth user
+  // Create auth user with metadata (trigger will create user profile)
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         full_name: fullName,
+        role: 'client',
+        phone: phone,
       },
     },
   })
@@ -47,23 +49,7 @@ async function createClientAccount(
     return null
   }
 
-  // Create user profile
-  const { error: userError } = await supabase
-    .from('users')
-    .insert({
-      id: authData.user.id,
-      email,
-      role: 'client',
-      full_name: fullName,
-      phone,
-    } as any)
-
-  if (userError) {
-    console.error('Error creating client profile:', userError)
-    return null
-  }
-
-  // Sign out immediately (client doesn't need to be logged in)
+  // User profile is created by database trigger  // Sign out immediately (client doesn't need to be logged in)
   await supabase.auth.signOut()
 
   return { userId: authData.user.id, password }
