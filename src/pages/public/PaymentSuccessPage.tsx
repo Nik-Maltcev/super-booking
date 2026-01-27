@@ -2,41 +2,49 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function PaymentSuccessPage() {
   const [searchParams] = useSearchParams()
   const appointmentId = searchParams.get('appointmentId')
-  const [isUpdating, setIsUpdating] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     async function confirmPayment() {
       if (!appointmentId) {
-        setError('ID записи не найден')
-        setIsUpdating(false)
+        setErrorMessage('ID записи не найден в URL')
+        setStatus('error')
         return
       }
 
-      // Update appointment status to confirmed
-      const { error: updateError } = await supabase
-        .from('appointments')
-        .update({ status: 'confirmed' } as never)
-        .eq('id', appointmentId)
+      try {
+        // Update appointment status to confirmed
+        const { error } = await supabase
+          .from('appointments')
+          .update({ status: 'confirmed' })
+          .eq('id', appointmentId)
 
-      if (updateError) {
-        console.error('Error confirming appointment:', updateError)
-        setError('Ошибка подтверждения записи')
+        if (error) {
+          console.error('Error confirming appointment:', error)
+          setErrorMessage(error.message)
+          setStatus('error')
+          return
+        }
+
+        setStatus('success')
+      } catch (err) {
+        console.error('Error:', err)
+        setErrorMessage('Произошла ошибка при подтверждении записи')
+        setStatus('error')
       }
-
-      setIsUpdating(false)
     }
 
     confirmPayment()
   }, [appointmentId])
 
-  if (isUpdating) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
@@ -51,15 +59,26 @@ export function PaymentSuccessPage() {
     )
   }
 
-  if (error) {
+  if (status === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center text-red-600">Ошибка</CardTitle>
+            <div className="flex justify-center mb-4">
+              <AlertCircle className="h-16 w-16 text-yellow-500" />
+            </div>
+            <CardTitle className="text-center text-yellow-600">
+              Оплата получена
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-center text-muted-foreground mb-4">{error}</p>
+          <CardContent className="space-y-4">
+            <p className="text-center text-muted-foreground">
+              Платёж прошёл успешно, но возникла проблема с обновлением статуса записи.
+              Не волнуйтесь - мы получили вашу оплату и свяжемся с вами.
+            </p>
+            {errorMessage && (
+              <p className="text-center text-sm text-red-500">{errorMessage}</p>
+            )}
             <Button asChild className="w-full">
               <Link to="/">На главную</Link>
             </Button>
@@ -85,11 +104,13 @@ export function PaymentSuccessPage() {
             Ваша запись подтверждена. Мы отправили детали на вашу электронную почту.
           </p>
           <div className="flex flex-col gap-2">
-            <Button asChild>
-              <Link to={`/confirmation/${appointmentId}`}>
-                Посмотреть детали записи
-              </Link>
-            </Button>
+            {appointmentId && (
+              <Button asChild>
+                <Link to={`/confirmation/${appointmentId}`}>
+                  Посмотреть детали записи
+                </Link>
+              </Button>
+            )}
             <Button variant="outline" asChild>
               <Link to="/">На главную</Link>
             </Button>

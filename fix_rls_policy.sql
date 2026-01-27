@@ -42,3 +42,29 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- =====================================================
+-- PAYMENT INTEGRATION FIX
+-- Run this to add payment_id column and fix RLS
+-- =====================================================
+
+-- Add payment_id column to appointments
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_id TEXT;
+
+-- Allow service role to update appointments (for Edge Function)
+-- This is handled by service_role key which bypasses RLS
+
+
+-- =====================================================
+-- SIMPLE FIX: Allow anon users to update appointment status after payment
+-- This is a simpler approach without Edge Functions
+-- =====================================================
+
+-- Allow anyone to update appointment status to 'confirmed' (for payment success page)
+DROP POLICY IF EXISTS "Allow payment confirmation" ON appointments;
+CREATE POLICY "Allow payment confirmation" ON appointments
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (status = 'confirmed');
