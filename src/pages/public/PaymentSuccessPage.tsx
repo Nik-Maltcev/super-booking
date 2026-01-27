@@ -23,7 +23,7 @@ export function PaymentSuccessPage() {
         // Update appointment status to confirmed
         const { error } = await supabase
           .from('appointments')
-          .update({ status: 'confirmed' })
+          .update({ status: 'confirmed' } as never)
           .eq('id', appointmentId)
 
         if (error) {
