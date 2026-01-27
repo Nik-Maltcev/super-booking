@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
@@ -11,11 +11,11 @@ import { useAppointments } from '@/hooks/useAppointments'
 import { useLawyer } from '@/hooks/useLawyers'
 import { showSuccessToast, showErrorToast, showWarningToast } from '@/lib/errors'
 import { ErrorDisplay } from '@/components/ui/error-display'
+import { generatePaymentUrl } from '@/lib/payanyway'
 import type { TimeSlot } from '@/types'
 
 export function BookingPage() {
   const { lawyerId } = useParams<{ lawyerId: string }>()
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -60,6 +60,7 @@ export function BookingPage() {
     }
 
     try {
+      // Create appointment with status "pending" (will be confirmed after payment)
       const appointment = await createAppointment({
         time_slot_id: selectedSlot.id,
         client_name: data.client_name,
@@ -68,14 +69,20 @@ export function BookingPage() {
         comment: data.comment,
       })
 
-      showSuccessToast('Запись успешно создана!')
+      showSuccessToast('Запись создана! Переходим к оплате...')
       
-      // Navigate with password if generated
-      if (appointment.generatedPassword) {
-        navigate(`/confirmation/${appointment.id}?password=${appointment.generatedPassword}`)
-      } else {
-        navigate(`/confirmation/${appointment.id}`)
-      }
+      // Generate payment URL and redirect to PayAnyWay
+      const paymentUrl = generatePaymentUrl({
+        appointmentId: appointment.id,
+        clientEmail: data.client_email,
+        clientName: data.client_name,
+        lawyerName: lawyer?.user?.full_name || 'юриста',
+        date: selectedSlot.date,
+        time: selectedSlot.start_time,
+      })
+
+      // Redirect to payment page
+      window.location.href = paymentUrl
     } catch (error) {
       showErrorToast(error)
     }

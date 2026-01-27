@@ -144,7 +144,7 @@ export function BookingForm({
               className="w-full" 
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Отправка...' : 'Записаться на консультацию'}
+              {isSubmitting ? 'Переход к оплате...' : 'Оплатить и записаться (10 ₽)'}
             </Button>
           </form>
         </Form>
