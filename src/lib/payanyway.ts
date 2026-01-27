@@ -4,7 +4,7 @@ import { md5 } from './md5'
 const PAW_CONFIG = {
   MNT_ID: '74730556',
   MNT_INTEGRITY_CODE: 'amx50100',
-  MNT_TEST_MODE: '1', // 1 = тестовый режим, 0 = боевой
+  MNT_TEST_MODE: '0', // 0 = боевой режим
   MNT_CURRENCY_CODE: 'RUB',
   AMOUNT: '10.00', // Сумма консультации
   BASE_URL: 'https://super-booking-production.up.railway.app',
