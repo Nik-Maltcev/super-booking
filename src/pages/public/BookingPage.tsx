@@ -172,12 +172,18 @@ export function BookingPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">
             Запись к {lawyer.user?.full_name || 'юристу'}
           </h1>
           <p className="text-muted-foreground">
             {lawyer.specialization}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-muted-foreground">Стоимость консультации</p>
+          <p className="text-2xl font-bold text-primary">
+            {lawyer.consultation_price?.toLocaleString('ru-RU') || '1000'} ₽
           </p>
         </div>
       </div>

@@ -126,7 +126,7 @@ async function fetchAppointmentById(id: string): Promise<Appointment | null> {
 }
 
 // Create appointment with status "pending" (Requirements 3.2)
-// Mark time slot as unavailable (Requirements 3.3)
+// Time slot stays available until payment is confirmed
 // Auto-create client account if not exists
 async function createAppointment(input: CreateAppointmentInput): Promise<Appointment & { generatedPassword?: string }> {
   let generatedPassword: string | undefined
@@ -147,6 +147,7 @@ async function createAppointment(input: CreateAppointmentInput): Promise<Appoint
   }
 
   // Create the appointment with status "pending"
+  // Slot is NOT blocked yet - will be blocked after payment confirmation
   const { data: appointment, error: appointmentError } = await supabase
     .from('appointments')
     .insert({
@@ -164,17 +165,8 @@ async function createAppointment(input: CreateAppointmentInput): Promise<Appoint
     throw new Error(appointmentError.message)
   }
 
-  // Then, mark the time slot as unavailable (Requirements 3.3)
-  const { error: slotError } = await supabase
-    .from('time_slots')
-    .update({ is_available: false } as never)
-    .eq('id', input.time_slot_id)
-
-  if (slotError) {
-    // Rollback: delete the appointment if slot update fails
-    await supabase.from('appointments').delete().eq('id', (appointment as { id: string }).id)
-    throw new Error(slotError.message)
-  }
+  // NOTE: Time slot is NOT blocked here anymore
+  // It will be blocked by the payment callback (server.js) when payment is confirmed
 
   return { 
     ...(appointment as unknown as Appointment), 

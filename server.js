@@ -78,6 +78,18 @@ app.all('/api/payment-callback', async (req, res) => {
     
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
     
+    // First, get the appointment to find the time slot
+    const { data: appointment, error: fetchError } = await supabase
+      .from('appointments')
+      .select('time_slot_id')
+      .eq('id', appointmentId)
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching appointment:', fetchError);
+      return res.send('FAIL');
+    }
+    
     // Update appointment status to confirmed
     const { error } = await supabase
       .from('appointments')
@@ -90,6 +102,19 @@ app.all('/api/payment-callback', async (req, res) => {
     if (error) {
       console.error('Error updating appointment:', error);
       return res.send('FAIL');
+    }
+    
+    // Block the time slot (mark as unavailable)
+    if (appointment && appointment.time_slot_id) {
+      const { error: slotError } = await supabase
+        .from('time_slots')
+        .update({ is_available: false })
+        .eq('id', appointment.time_slot_id);
+      
+      if (slotError) {
+        console.error('Error blocking time slot:', slotError);
+        // Don't fail - appointment is already confirmed
+      }
     }
     
     console.log('Payment confirmed for appointment:', appointmentId);
