@@ -6,7 +6,6 @@ const PAW_CONFIG = {
   MNT_INTEGRITY_CODE: 'amx50100',
   MNT_TEST_MODE: '0', // 0 = боевой режим
   MNT_CURRENCY_CODE: 'RUB',
-  AMOUNT: '10.00', // Сумма консультации
   BASE_URL: 'https://super-booking-production.up.railway.app',
 }
 
@@ -15,6 +14,7 @@ interface PaymentParams {
   clientEmail: string
   clientName: string
   lawyerName: string
+  amount: number // Цена консультации юриста
   date?: string
   time?: string
 }
@@ -45,11 +45,12 @@ function generateSignature(params: {
 export function generatePaymentUrl(params: PaymentParams): string {
   const transactionId = `${params.appointmentId}|${Date.now()}`
   const description = `Консультация юриста: ${params.lawyerName}`
+  const amount = params.amount.toFixed(2) // Format as "10.00"
   
   const signature = generateSignature({
     mntId: PAW_CONFIG.MNT_ID,
     transactionId,
-    amount: PAW_CONFIG.AMOUNT,
+    amount,
     currencyCode: PAW_CONFIG.MNT_CURRENCY_CODE,
     subscriberId: params.clientEmail,
     testMode: PAW_CONFIG.MNT_TEST_MODE,
@@ -61,7 +62,7 @@ export function generatePaymentUrl(params: PaymentParams): string {
 
   const urlParams = new URLSearchParams({
     MNT_ID: PAW_CONFIG.MNT_ID,
-    MNT_AMOUNT: PAW_CONFIG.AMOUNT,
+    MNT_AMOUNT: amount,
     MNT_TRANSACTION_ID: transactionId,
     MNT_CURRENCY_CODE: PAW_CONFIG.MNT_CURRENCY_CODE,
     MNT_TEST_MODE: PAW_CONFIG.MNT_TEST_MODE,
@@ -76,5 +77,5 @@ export function generatePaymentUrl(params: PaymentParams): string {
 }
 
 export function getPaymentAmount(): string {
-  return PAW_CONFIG.AMOUNT
+  return '10.00' // Default, but should use lawyer's price
 }

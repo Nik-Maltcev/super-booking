@@ -22,6 +22,7 @@ export interface Lawyer {
   specialization: string
   bio: string | null
   avatar_url: string | null
+  consultation_price: number
   user?: User
 }
 

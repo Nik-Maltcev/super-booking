@@ -77,6 +77,7 @@ export function BookingPage() {
         clientEmail: data.client_email,
         clientName: data.client_name,
         lawyerName: lawyer?.user?.full_name || 'юриста',
+        amount: lawyer?.consultation_price || 10,
         date: selectedSlot.date,
         time: selectedSlot.start_time,
       })

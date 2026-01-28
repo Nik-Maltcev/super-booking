@@ -1,5 +1,5 @@
 // Supabase Edge Function для обработки Pay URL от PayAnyWay
-// Deno runtime
+// Deploy: supabase functions deploy payment-callback --project-ref vbsiupheijppepxtjixw
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.89.0'
 
