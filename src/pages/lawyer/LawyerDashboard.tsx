@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthContext } from '@/contexts/AuthContext'
-import { useCurrentLawyer } from '@/hooks/useLawyers'
+import { useCurrentLawyer, useUpdateLawyerPrice } from '@/hooks/useLawyers'
 import { useAppointments } from '@/hooks/useAppointments'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ErrorDisplay } from '@/components/ui/error-display'
+import { showSuccessToast, showErrorToast } from '@/lib/errors'
 
 // Helper to format time
 function formatTime(time: string): string {
@@ -39,7 +40,10 @@ export function LawyerDashboard() {
   const { user } = useAuthContext()
   const queryClient = useQueryClient()
   const { lawyer, isLoading: isLawyerLoading, error: lawyerError } = useCurrentLawyer(user?.id)
+  const { updatePrice, isUpdating } = useUpdateLawyerPrice()
   const [copied, setCopied] = useState(false)
+  const [price, setPrice] = useState<string>('')
+  const [isEditingPrice, setIsEditingPrice] = useState(false)
   
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0]
@@ -62,6 +66,27 @@ export function LawyerDashboard() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  const handleSavePrice = async () => {
+    if (!lawyer) return
+    const numPrice = parseFloat(price)
+    if (isNaN(numPrice) || numPrice < 0) {
+      showErrorToast('Введите корректную цену')
+      return
+    }
+    try {
+      await updatePrice({ lawyerId: lawyer.id, price: numPrice })
+      showSuccessToast('Цена обновлена')
+      setIsEditingPrice(false)
+    } catch (error) {
+      showErrorToast(error)
+    }
+  }
+
+  const handleStartEditPrice = () => {
+    setPrice(lawyer?.consultation_price?.toString() || '1000')
+    setIsEditingPrice(true)
   }
 
   const handleRetry = () => {
@@ -144,6 +169,45 @@ export function LawyerDashboard() {
               Открыть
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Цена консультации */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Стоимость консультации</CardTitle>
+          <CardDescription>
+            Эта сумма будет списана с клиента при записи
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isEditingPrice ? (
+            <div className="flex gap-2 items-center">
+              <Input 
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="Цена в рублях"
+                className="w-40"
+              />
+              <span className="text-gray-500">₽</span>
+              <Button onClick={handleSavePrice} disabled={isUpdating}>
+                {isUpdating ? 'Сохранение...' : 'Сохранить'}
+              </Button>
+              <Button variant="outline" onClick={() => setIsEditingPrice(false)}>
+                Отмена
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2 items-center">
+              <span className="text-2xl font-bold">
+                {lawyer?.consultation_price?.toLocaleString('ru-RU') || '1000'} ₽
+              </span>
+              <Button variant="outline" onClick={handleStartEditPrice}>
+                Изменить
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

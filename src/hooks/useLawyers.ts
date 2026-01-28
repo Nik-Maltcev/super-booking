@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Lawyer, LawyerWithStats } from '@/types'
 
@@ -191,5 +191,38 @@ export function useLawyer(idOrSlug: string | undefined) {
     lawyer,
     isLoading,
     error: error as Error | null,
+  }
+}
+
+
+// Update lawyer consultation price
+async function updateLawyerPrice(lawyerId: string, price: number): Promise<void> {
+  const { error } = await supabase
+    .from('lawyers')
+    .update({ consultation_price: price } as never)
+    .eq('id', lawyerId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+// Hook to update lawyer price
+export function useUpdateLawyerPrice() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({ lawyerId, price }: { lawyerId: string; price: number }) =>
+      updateLawyerPrice(lawyerId, price),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lawyer'] })
+      queryClient.invalidateQueries({ queryKey: ['lawyers'] })
+    },
+  })
+
+  return {
+    updatePrice: mutation.mutateAsync,
+    isUpdating: mutation.isPending,
+    error: mutation.error as Error | null,
   }
 }
