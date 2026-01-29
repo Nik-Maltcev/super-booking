@@ -92,13 +92,18 @@ app.all('/api/payment-callback', async (req, res) => {
   }
 });
 
-// Serve static files from dist folder
-app.use(express.static(path.join(__dirname, 'dist')));
+// Serve static files from dist folder (exclude /api routes)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  express.static(path.join(__dirname, 'dist'))(req, res, next);
+});
 
-// SPA fallback - serve index.html for all other routes (except /api)
+// SPA fallback - serve index.html for all non-API routes
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
-    return res.status(404).send('Not found');
+    return res.status(404).send('API not found');
   }
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
