@@ -69,7 +69,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <header className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold text-gray-900">
-              Адвокатское бюро — Администрирование
+              Адвокатское бюро "Муратова и Партнеры" — Администрирование
             </h1>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
