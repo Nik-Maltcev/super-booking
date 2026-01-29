@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { format, parseISO, isSameDay } from 'date-fns'
+import { format, parseISO, isSameDay, startOfDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
@@ -65,7 +65,7 @@ export function TimeSlotPicker({
             mode="single"
             selected={selectedDate || undefined}
             onSelect={(date) => date && onDateSelect(date)}
-            disabled={(date) => date < new Date() || isDateDisabled(date)}
+            disabled={(date) => startOfDay(date) < startOfDay(new Date()) || isDateDisabled(date)}
             locale={ru}
             className="rounded-md border"
           />
