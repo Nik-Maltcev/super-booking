@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Loader2, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppointment } from '@/hooks/useAppointments'
 
@@ -11,6 +11,7 @@ export function PaymentPage() {
   const navigate = useNavigate()
   const { appointment, isLoading } = useAppointment(appointmentId || '')
   const [isConfirming, setIsConfirming] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
 
   // Check if already confirmed
@@ -42,6 +43,26 @@ export function PaymentPage() {
       console.error('Error confirming:', error)
     }
     setIsConfirming(false)
+  }
+
+  const handleCancel = async () => {
+    if (!appointmentId) return
+    
+    setIsCancelling(true)
+    try {
+      // Delete the pending appointment
+      await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId)
+        .eq('status', 'pending') // Only delete if still pending
+
+      // Navigate back to booking
+      navigate(-1)
+    } catch (error) {
+      console.error('Error cancelling:', error)
+    }
+    setIsCancelling(false)
   }
 
   if (isLoading) {
@@ -109,15 +130,19 @@ export function PaymentPage() {
       <div className="max-w-2xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={handleCancel} disabled={isCancelling}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-bold">Оплата консультации</h1>
             <p className="text-sm text-muted-foreground">
               {lawyer?.user?.full_name} • {price.toLocaleString('ru-RU')} ₽
             </p>
           </div>
+          <Button variant="outline" size="sm" onClick={handleCancel} disabled={isCancelling}>
+            <X className="h-4 w-4 mr-1" />
+            Отменить
+          </Button>
         </div>
 
         {/* Payment Widget */}
