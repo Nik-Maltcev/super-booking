@@ -68,6 +68,12 @@ export function BookingPage() {
         comment: data.comment,
       })
 
+      // Save generated password to localStorage before redirect
+      if (appointment.generatedPassword) {
+        localStorage.setItem('generatedPassword', appointment.generatedPassword)
+        localStorage.setItem('generatedPasswordAppointmentId', appointment.id)
+      }
+
       showSuccessToast('Запись создана! Переходим к оплате...')
       
       // Redirect to our payment page with embedded widget

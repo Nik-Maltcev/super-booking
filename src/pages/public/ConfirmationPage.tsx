@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -11,11 +12,26 @@ import { ErrorDisplay } from '@/components/ui/error-display'
 export function ConfirmationPage() {
   const { appointmentId: paramId } = useParams<{ appointmentId: string }>()
   const [searchParams] = useSearchParams()
-  const generatedPassword = searchParams.get('password')
   const queryClient = useQueryClient()
   
   // Support both URL param and query param (PayAnyWay redirect)
   const appointmentId = paramId || searchParams.get('MNT_TRANSACTION_ID') || ''
+  
+  // Get password from localStorage (saved before payment redirect)
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const savedPassword = localStorage.getItem('generatedPassword')
+    const savedAppointmentId = localStorage.getItem('generatedPasswordAppointmentId')
+    
+    // Only show password if it matches this appointment
+    if (savedPassword && savedAppointmentId === appointmentId) {
+      setGeneratedPassword(savedPassword)
+      // Clear after reading
+      localStorage.removeItem('generatedPassword')
+      localStorage.removeItem('generatedPasswordAppointmentId')
+    }
+  }, [appointmentId])
   
   const { appointment, isLoading, error } = useAppointment(appointmentId)
 
