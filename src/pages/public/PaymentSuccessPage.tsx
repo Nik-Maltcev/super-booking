@@ -7,30 +7,64 @@ import { supabase } from '@/lib/supabase'
 
 export function PaymentSuccessPage() {
   const [searchParams] = useSearchParams()
-  const appointmentId = searchParams.get('appointmentId')
+  const transactionId = searchParams.get('transactionId')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState('')
+  const [appointmentId, setAppointmentId] = useState<string | null>(null)
 
   useEffect(() => {
     async function confirmPayment() {
-      if (!appointmentId) {
-        setErrorMessage('ID записи не найден в URL')
+      if (!transactionId) {
+        setErrorMessage('Transaction ID не найден в URL')
         setStatus('error')
         return
       }
 
       try {
-        // Update appointment status to confirmed
-        const { error } = await supabase
+        // Find appointment by transaction_id
+        const { data: appointment, error: findError } = await supabase
           .from('appointments')
-          .update({ status: 'confirmed' } as never)
-          .eq('id', appointmentId)
+          .select('id, time_slot_id, status')
+          .eq('transaction_id', transactionId)
+          .single()
 
-        if (error) {
-          console.error('Error confirming appointment:', error)
-          setErrorMessage(error.message)
+        if (findError || !appointment) {
+          console.error('Error finding appointment:', findError)
+          setErrorMessage('Запись не найдена по transaction_id')
           setStatus('error')
           return
+        }
+
+        setAppointmentId(appointment.id)
+
+        // If already confirmed, just show success
+        if (appointment.status === 'confirmed') {
+          setStatus('success')
+          return
+        }
+
+        // Update appointment status to confirmed
+        const { error: updateError } = await supabase
+          .from('appointments')
+          .update({ status: 'confirmed' } as never)
+          .eq('id', appointment.id)
+
+        if (updateError) {
+          console.error('Error confirming appointment:', updateError)
+          setErrorMessage(updateError.message)
+          setStatus('error')
+          return
+        }
+
+        // Block the time slot
+        const { error: slotError } = await supabase
+          .from('time_slots')
+          .update({ is_available: false } as never)
+          .eq('id', appointment.time_slot_id)
+
+        if (slotError) {
+          console.error('Error blocking slot:', slotError)
+          // Don't fail - appointment is confirmed
         }
 
         setStatus('success')
@@ -42,7 +76,7 @@ export function PaymentSuccessPage() {
     }
 
     confirmPayment()
-  }, [appointmentId])
+  }, [transactionId])
 
   if (status === 'loading') {
     return (

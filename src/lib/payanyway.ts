@@ -42,7 +42,7 @@ function generateSignature(params: {
 }
 
 // Generate payment URL for PayAnyWay
-export function generatePaymentUrl(params: PaymentParams): string {
+export function generatePaymentUrl(params: PaymentParams): { url: string; transactionId: string } {
   const transactionId = `${params.appointmentId}|${Date.now()}`
   const description = `Консультация юриста: ${params.lawyerName}`
   const amount = params.amount.toFixed(2) // Format as "10.00"
@@ -57,7 +57,7 @@ export function generatePaymentUrl(params: PaymentParams): string {
     integrityCode: PAW_CONFIG.MNT_INTEGRITY_CODE,
   })
 
-  const successUrl = `${PAW_CONFIG.BASE_URL}/payment/success?appointmentId=${params.appointmentId}`
+  const successUrl = `${PAW_CONFIG.BASE_URL}/payment/success?transactionId=${encodeURIComponent(transactionId)}`
   const failUrl = `${PAW_CONFIG.BASE_URL}/payment/fail?appointmentId=${params.appointmentId}`
 
   const urlParams = new URLSearchParams({
@@ -73,7 +73,10 @@ export function generatePaymentUrl(params: PaymentParams): string {
     MNT_SIGNATURE: signature,
   })
 
-  return `https://payanyway.ru/assistant.htm?${urlParams.toString()}`
+  return {
+    url: `https://payanyway.ru/assistant.htm?${urlParams.toString()}`,
+    transactionId,
+  }
 }
 
 export function getPaymentAmount(): string {

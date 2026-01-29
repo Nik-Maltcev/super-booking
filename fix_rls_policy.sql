@@ -85,3 +85,9 @@ UPDATE lawyers SET consultation_price = 10.00 WHERE consultation_price IS NULL;
 -- ADD CONSULTATION PRICE TO LAWYERS
 -- =====================================================
 ALTER TABLE lawyers ADD COLUMN IF NOT EXISTS consultation_price DECIMAL(10,2) DEFAULT 1000.00;
+
+
+-- =====================================================
+-- ADD TRANSACTION_ID TO APPOINTMENTS FOR PAYMENT TRACKING
+-- =====================================================
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS transaction_id TEXT;

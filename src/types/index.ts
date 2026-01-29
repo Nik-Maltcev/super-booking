@@ -46,6 +46,8 @@ export interface Appointment {
   client_phone: string
   comment: string | null
   status: AppointmentStatus
+  transaction_id: string | null
+  payment_id: string | null
   created_at: string
   time_slot?: TimeSlot
 }
@@ -64,6 +66,7 @@ export interface CreateAppointmentInput {
   client_email: string
   client_phone: string
   comment?: string
+  transaction_id?: string
 }
 
 // Lawyer with statistics (for admin panel)

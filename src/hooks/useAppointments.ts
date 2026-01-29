@@ -156,6 +156,7 @@ async function createAppointment(input: CreateAppointmentInput): Promise<Appoint
       client_email: input.client_email,
       client_phone: input.client_phone,
       comment: input.comment || null,
+      transaction_id: input.transaction_id || null,
       status: 'pending', // Requirements 3.2: status must be "pending"
     } as never)
     .select()
