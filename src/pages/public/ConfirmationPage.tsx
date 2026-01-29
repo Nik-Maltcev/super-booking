@@ -65,13 +65,15 @@ export function ConfirmationPage() {
       {/* Success Header */}
       <div className="text-center space-y-4">
         <div className="flex justify-center">
-          <CheckCircle className="h-16 w-16 text-green-500" />
+          <CheckCircle className={`h-16 w-16 ${appointment.status === 'confirmed' ? 'text-green-500' : 'text-yellow-500'}`} />
         </div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Запись успешно создана!
+          {appointment.status === 'confirmed' ? 'Запись подтверждена!' : 'Запись успешно создана!'}
         </h1>
         <p className="text-muted-foreground">
-          Ваша заявка на консультацию принята и ожидает подтверждения.
+          {appointment.status === 'confirmed' 
+            ? 'Ваша консультация оплачена и забронирована.'
+            : 'Ваша заявка на консультацию принята и ожидает подтверждения.'}
         </p>
       </div>
 
@@ -183,9 +185,19 @@ export function ConfirmationPage() {
           <div className="pt-3 border-t">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Статус:</span>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                Ожидает подтверждения
-              </span>
+              {appointment.status === 'confirmed' ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Подтверждён
+                </span>
+              ) : appointment.status === 'cancelled' ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  Отменён
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  Ожидает подтверждения
+                </span>
+              )}
             </div>
           </div>
         </CardContent>
