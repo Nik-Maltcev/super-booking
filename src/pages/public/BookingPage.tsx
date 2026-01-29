@@ -11,8 +11,6 @@ import { useAppointments } from '@/hooks/useAppointments'
 import { useLawyer } from '@/hooks/useLawyers'
 import { showSuccessToast, showErrorToast, showWarningToast } from '@/lib/errors'
 import { ErrorDisplay } from '@/components/ui/error-display'
-import { generatePaymentUrl } from '@/lib/payanyway'
-import { supabase } from '@/lib/supabase'
 import type { TimeSlot } from '@/types'
 
 export function BookingPage() {
@@ -61,48 +59,19 @@ export function BookingPage() {
     }
 
     try {
-      // Generate payment data first to get transaction_id
-      const paymentData = generatePaymentUrl({
-        appointmentId: 'temp', // Will be replaced
-        clientEmail: data.client_email,
-        clientName: data.client_name,
-        lawyerName: lawyer?.user?.full_name || 'юриста',
-        amount: lawyer?.consultation_price || 10,
-        date: selectedSlot.date,
-        time: selectedSlot.start_time,
-      })
-
-      // Create appointment with transaction_id
+      // Create appointment with status "pending"
       const appointment = await createAppointment({
         time_slot_id: selectedSlot.id,
         client_name: data.client_name,
         client_email: data.client_email,
         client_phone: data.client_phone,
         comment: data.comment,
-        transaction_id: paymentData.transactionId,
       })
 
       showSuccessToast('Запись создана! Переходим к оплате...')
       
-      // Generate final payment URL with correct appointment ID
-      const finalPaymentData = generatePaymentUrl({
-        appointmentId: appointment.id,
-        clientEmail: data.client_email,
-        clientName: data.client_name,
-        lawyerName: lawyer?.user?.full_name || 'юриста',
-        amount: lawyer?.consultation_price || 10,
-        date: selectedSlot.date,
-        time: selectedSlot.start_time,
-      })
-
-      // Update appointment with correct transaction_id
-      await supabase
-        .from('appointments')
-        .update({ transaction_id: finalPaymentData.transactionId } as never)
-        .eq('id', appointment.id)
-
-      // Redirect to payment page
-      window.location.href = finalPaymentData.url
+      // Redirect to our payment page with embedded widget
+      window.location.href = `/payment/${appointment.id}`
     } catch (error) {
       showErrorToast(error)
     }

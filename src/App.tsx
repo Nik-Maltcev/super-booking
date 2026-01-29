@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { HomePage, BookingPage, ConfirmationPage } from '@/pages/public'
 import { PaymentSuccessPage } from '@/pages/public/PaymentSuccessPage'
 import { PaymentFailPage } from '@/pages/public/PaymentFailPage'
+import { PaymentPage } from '@/pages/public/PaymentPage'
 import { LawyerDashboard, SlotsManagement, LawyerAppointments } from '@/pages/lawyer'
 import { AdminLawyers, AdminAppointments } from '@/pages/admin'
 import { ClientDashboard } from '@/pages/client'
@@ -62,6 +63,7 @@ function App() {
         />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/fail" element={<PaymentFailPage />} />
+        <Route path="/payment/:appointmentId" element={<PaymentPage />} />
         <Route
           path="/login"
           element={
