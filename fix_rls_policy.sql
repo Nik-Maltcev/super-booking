@@ -135,3 +135,11 @@ CREATE POLICY "Anyone can read users" ON users
   FOR SELECT
   TO anon, authenticated
   USING (true);
+
+
+-- =====================================================
+-- REMOVE TRIGGER THAT BLOCKS SLOT ON APPOINTMENT CREATE
+-- Slot should only be blocked after payment confirmation!
+-- =====================================================
+DROP TRIGGER IF EXISTS trigger_block_slot_on_appointment ON appointments;
+DROP FUNCTION IF EXISTS block_slot_on_appointment();

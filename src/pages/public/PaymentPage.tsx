@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2, X, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import { useAppointment } from '@/hooks/useAppointments'
 
 export function PaymentPage() {
@@ -40,50 +40,34 @@ export function PaymentPage() {
     )
   }
 
-  // Build payment widget URL with transaction ID for callback
   const lawyer = appointment.time_slot?.lawyer
-  const price = lawyer?.consultation_price || 1000
-  const transactionId = `${appointmentId}|${Date.now()}`
+  const price = lawyer?.consultation_price || 10
   
-  // Success/Fail URLs for redirect after payment
-  const successUrl = `${window.location.origin}/confirmation/${appointmentId}`
-  const failUrl = `${window.location.origin}/payment/${appointmentId}`
-  
-  const widgetUrl = `https://payanyway.ru/assistant.widget?` + new URLSearchParams({
-    MNT_ID: '74730556',
-    MNT_AMOUNT: price.toFixed(2),
-    MNT_CURRENCY_CODE: 'RUB',
-    MNT_TEST_MODE: '0',
-    MNT_TRANSACTION_ID: transactionId,
-    MNT_DESCRIPTION: `Консультация: ${lawyer?.user?.full_name || 'юрист'}`,
-    MNT_SUCCESS_URL: successUrl,
-    MNT_FAIL_URL: failUrl,
-  }).toString()
+  // Simple widget URL without Success/Fail URLs
+  const widgetUrl = `https://payanyway.ru/assistant.widget?MNT_ID=74730556&MNT_AMOUNT=${price.toFixed(2)}&MNT_CURRENCY_CODE=RUB&MNT_TEST_MODE=0&MNT_TRANSACTION_ID=${appointmentId}&MNT_DESCRIPTION=${encodeURIComponent(`Консультация: ${lawyer?.user?.full_name || 'юрист'}`)}`
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto space-y-4">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link to="/">
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
-          <div className="flex-1">
+          <div>
             <h1 className="text-xl font-bold">Оплата консультации</h1>
             <p className="text-sm text-muted-foreground">
-              {lawyer?.user?.full_name} • {price.toLocaleString('ru-RU')} ₽
+              {lawyer?.user?.full_name} • {price} ₽
             </p>
           </div>
         </div>
 
-        {/* Payment Widget */}
         <Card>
           <CardHeader>
             <CardTitle>Оплатите консультацию</CardTitle>
             <CardDescription>
-              После успешной оплаты вы будете автоматически перенаправлены на страницу подтверждения
+              После оплаты статус записи обновится автоматически
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -94,19 +78,6 @@ export function PaymentPage() {
               style={{ border: 'none', borderRadius: '8px' }}
               title="Оплата"
             />
-          </CardContent>
-        </Card>
-
-        {/* Info */}
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="pt-4">
-            <div className="flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-yellow-800">
-                <p className="font-medium">Важно!</p>
-                <p>Не закрывайте эту страницу до завершения оплаты. После успешной оплаты статус записи обновится автоматически.</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
