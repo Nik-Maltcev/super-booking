@@ -91,3 +91,14 @@ ALTER TABLE lawyers ADD COLUMN IF NOT EXISTS consultation_price DECIMAL(10,2) DE
 -- ADD TRANSACTION_ID TO APPOINTMENTS FOR PAYMENT TRACKING
 -- =====================================================
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS transaction_id TEXT;
+
+
+-- =====================================================
+-- ALLOW ANON TO UPDATE TIME SLOTS (mark as unavailable after payment)
+-- =====================================================
+DROP POLICY IF EXISTS "Allow slot booking" ON time_slots;
+CREATE POLICY "Allow slot booking" ON time_slots
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (is_available = false);

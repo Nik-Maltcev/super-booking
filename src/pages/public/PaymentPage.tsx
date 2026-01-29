@@ -27,20 +27,32 @@ export function PaymentPage() {
     setIsConfirming(true)
     try {
       // Update appointment status
-      await supabase
+      const { error: appointmentError } = await supabase
         .from('appointments')
         .update({ status: 'confirmed' } as never)
         .eq('id', appointmentId)
 
+      if (appointmentError) {
+        console.error('Error updating appointment:', appointmentError)
+        alert('Ошибка обновления статуса: ' + appointmentError.message)
+        setIsConfirming(false)
+        return
+      }
+
       // Block the time slot
-      await supabase
+      const { error: slotError } = await supabase
         .from('time_slots')
         .update({ is_available: false } as never)
         .eq('id', appointment.time_slot_id)
 
+      if (slotError) {
+        console.error('Error updating slot:', slotError)
+      }
+
       setConfirmed(true)
     } catch (error) {
       console.error('Error confirming:', error)
+      alert('Произошла ошибка при подтверждении')
     }
     setIsConfirming(false)
   }
