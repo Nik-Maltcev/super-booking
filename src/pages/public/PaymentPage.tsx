@@ -43,8 +43,11 @@ export function PaymentPage() {
   const lawyer = appointment.time_slot?.lawyer
   const price = lawyer?.consultation_price || 10
   
-  // Simple widget URL without Success/Fail URLs
-  const widgetUrl = `https://payanyway.ru/assistant.widget?MNT_ID=74730556&MNT_AMOUNT=${price.toFixed(2)}&MNT_CURRENCY_CODE=RUB&MNT_TEST_MODE=0&MNT_TRANSACTION_ID=${appointmentId}&MNT_DESCRIPTION=${encodeURIComponent(`Консультация: ${lawyer?.user?.full_name || 'юрист'}`)}`
+  // Success URL for redirect after payment
+  const successUrl = `${window.location.origin}/confirmation/${appointmentId}`
+  
+  // Widget URL with Success URL
+  const widgetUrl = `https://payanyway.ru/assistant.widget?MNT_ID=74730556&MNT_AMOUNT=${price.toFixed(2)}&MNT_CURRENCY_CODE=RUB&MNT_TEST_MODE=0&MNT_TRANSACTION_ID=${appointmentId}&MNT_SUCCESS_URL=${encodeURIComponent(successUrl)}&MNT_DESCRIPTION=${encodeURIComponent(`Консультация: ${lawyer?.user?.full_name || 'юрист'}`)}`
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
