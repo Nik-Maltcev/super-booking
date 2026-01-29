@@ -102,3 +102,36 @@ CREATE POLICY "Allow slot booking" ON time_slots
   TO anon, authenticated
   USING (true)
   WITH CHECK (is_available = false);
+
+
+-- =====================================================
+-- ALLOW ANON TO READ APPOINTMENTS AND RELATED DATA
+-- =====================================================
+
+-- Allow anyone to read appointments (for confirmation page)
+DROP POLICY IF EXISTS "Anyone can read appointments" ON appointments;
+CREATE POLICY "Anyone can read appointments" ON appointments
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+-- Allow anyone to read time slots
+DROP POLICY IF EXISTS "Anyone can read time_slots" ON time_slots;
+CREATE POLICY "Anyone can read time_slots" ON time_slots
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+-- Allow anyone to read lawyers
+DROP POLICY IF EXISTS "Anyone can read lawyers" ON lawyers;
+CREATE POLICY "Anyone can read lawyers" ON lawyers
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+-- Allow anyone to read users (for lawyer names)
+DROP POLICY IF EXISTS "Anyone can read users" ON users;
+CREATE POLICY "Anyone can read users" ON users
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
