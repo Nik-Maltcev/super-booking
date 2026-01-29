@@ -2,9 +2,19 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, CheckCircle, Loader2, X } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Loader2, X, Key } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppointment } from '@/hooks/useAppointments'
+
+// Generate random password
+function generatePassword(length = 8): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let password = ''
+  for (let i = 0; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return password
+}
 
 export function PaymentPage() {
   const { appointmentId } = useParams<{ appointmentId: string }>()
@@ -13,6 +23,7 @@ export function PaymentPage() {
   const [isConfirming, setIsConfirming] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
 
   // Check if already confirmed
   useEffect(() => {
@@ -48,6 +59,29 @@ export function PaymentPage() {
       if (slotError) {
         console.error('Error updating slot:', slotError)
       }
+
+      // Try to create client account
+      const password = generatePassword(8)
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: appointment.client_email,
+        password: password,
+        options: {
+          data: {
+            full_name: appointment.client_name,
+            phone: appointment.client_phone,
+            role: 'client',
+          },
+        },
+      })
+
+      if (!signUpError) {
+        setGeneratedPassword(password)
+      } else {
+        console.log('Account may already exist:', signUpError.message)
+      }
+
+      // Sign out so client can log in manually
+      await supabase.auth.signOut()
 
       setConfirmed(true)
     } catch (error) {
@@ -116,13 +150,42 @@ export function PaymentPage() {
             <p className="text-center text-muted-foreground">
               Спасибо за оплату. Ваша консультация забронирована.
             </p>
+
+            {/* Show credentials if account was created */}
+            {generatedPassword && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
+                <div className="flex items-center gap-2 text-green-800 font-medium">
+                  <Key className="h-5 w-5" />
+                  Ваш личный кабинет создан
+                </div>
+                <div className="bg-white p-3 rounded border border-green-200 space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email:</p>
+                    <p className="font-mono">{appointment?.client_email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Пароль:</p>
+                    <p className="font-mono text-lg font-bold">{generatedPassword}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  💡 Сохраните пароль! В личном кабинете вы сможете просматривать свои записи.
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col gap-2">
               <Button asChild>
-                <Link to={`/confirmation/${appointmentId}`}>
+                <Link to={generatedPassword ? `/confirmation/${appointmentId}?password=${generatedPassword}` : `/confirmation/${appointmentId}`}>
                   Посмотреть детали
                 </Link>
               </Button>
-              <Button variant="outline" asChild>
+              {generatedPassword && (
+                <Button variant="outline" asChild>
+                  <Link to="/login">Войти в личный кабинет</Link>
+                </Button>
+              )}
+              <Button variant="ghost" asChild>
                 <Link to="/">На главную</Link>
               </Button>
             </div>
