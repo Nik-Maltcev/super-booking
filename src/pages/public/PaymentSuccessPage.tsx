@@ -35,10 +35,11 @@ export function PaymentSuccessPage() {
           return
         }
 
-        setAppointmentId(appointment.id)
+        const apt = appointment as { id: string; time_slot_id: string; status: string }
+        setAppointmentId(apt.id)
 
         // If already confirmed, just show success
-        if (appointment.status === 'confirmed') {
+        if (apt.status === 'confirmed') {
           setStatus('success')
           return
         }
@@ -47,7 +48,7 @@ export function PaymentSuccessPage() {
         const { error: updateError } = await supabase
           .from('appointments')
           .update({ status: 'confirmed' } as never)
-          .eq('id', appointment.id)
+          .eq('id', apt.id)
 
         if (updateError) {
           console.error('Error confirming appointment:', updateError)
@@ -60,7 +61,7 @@ export function PaymentSuccessPage() {
         const { error: slotError } = await supabase
           .from('time_slots')
           .update({ is_available: false } as never)
-          .eq('id', appointment.time_slot_id)
+          .eq('id', apt.time_slot_id)
 
         if (slotError) {
           console.error('Error blocking slot:', slotError)
