@@ -26,9 +26,13 @@ function md5(str) {
 
 // PayAnyWay Pay URL endpoint
 app.all('/api/payment-callback', async (req, res) => {
-  console.log('Payment callback received:', req.method, req.body || req.query);
+  console.log('=== PAYMENT CALLBACK ===');
+  console.log('Method:', req.method);
+  console.log('Query:', JSON.stringify(req.query));
+  console.log('Body:', JSON.stringify(req.body));
   
   const params = req.method === 'POST' ? req.body : req.query;
+  console.log('Params:', JSON.stringify(params));
   
   // If no params, return SUCCESS (PayAnyWay test request)
   if (!params.MNT_TRANSACTION_ID) {
@@ -60,9 +64,12 @@ app.all('/api/payment-callback', async (req, res) => {
     // For now, continue anyway (signature might be different format)
   }
   
-  // Extract appointment ID from transaction ID (format: appointmentId|timestamp)
+  // Extract appointment ID from transaction ID
   const transactionId = params.MNT_TRANSACTION_ID;
-  const appointmentId = transactionId.split('|')[0];
+  const appointmentId = transactionId.includes('|') ? transactionId.split('|')[0] : transactionId;
+  
+  console.log('Transaction ID:', transactionId);
+  console.log('Appointment ID:', appointmentId);
   
   if (!appointmentId) {
     console.error('Invalid transaction ID format:', transactionId);
@@ -71,6 +78,9 @@ app.all('/api/payment-callback', async (req, res) => {
   
   try {
     // Create Supabase client with service role key (bypasses RLS)
+    console.log('SUPABASE_URL:', SUPABASE_URL ? 'SET' : 'NOT SET');
+    console.log('SUPABASE_SERVICE_KEY:', SUPABASE_SERVICE_KEY ? 'SET' : 'NOT SET');
+    
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       console.error('Missing Supabase credentials');
       return res.send('FAIL');
