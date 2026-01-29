@@ -61,6 +61,14 @@ function App() {
             </PublicLayout>
           }
         />
+        <Route
+          path="/confirmation/"
+          element={
+            <PublicLayout>
+              <ConfirmationPage />
+            </PublicLayout>
+          }
+        />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/fail" element={<PaymentFailPage />} />
         <Route path="/payment/:appointmentId" element={<PaymentPage />} />

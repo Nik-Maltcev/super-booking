@@ -9,12 +9,15 @@ import { useAppointment } from '@/hooks/useAppointments'
 import { ErrorDisplay } from '@/components/ui/error-display'
 
 export function ConfirmationPage() {
-  const { appointmentId } = useParams<{ appointmentId: string }>()
+  const { appointmentId: paramId } = useParams<{ appointmentId: string }>()
   const [searchParams] = useSearchParams()
   const generatedPassword = searchParams.get('password')
   const queryClient = useQueryClient()
   
-  const { appointment, isLoading, error } = useAppointment(appointmentId!)
+  // Support both URL param and query param (PayAnyWay redirect)
+  const appointmentId = paramId || searchParams.get('MNT_TRANSACTION_ID') || ''
+  
+  const { appointment, isLoading, error } = useAppointment(appointmentId)
 
   const handleRetry = () => {
     queryClient.invalidateQueries({ queryKey: ['appointment', appointmentId] })
