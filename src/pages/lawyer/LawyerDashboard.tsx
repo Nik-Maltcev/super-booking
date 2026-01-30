@@ -55,9 +55,9 @@ export function LawyerDashboard() {
   const isLoading = isLawyerLoading || isAppointmentsLoading
   const error = lawyerError || appointmentsError
 
-  // Generate booking link
-  const bookingLink = lawyer?.id 
-    ? `${window.location.origin}/booking/${lawyer.id}`
+  // Generate booking link (use slug for prettier URLs)
+  const bookingLink = lawyer?.slug 
+    ? `${window.location.origin}/booking/${lawyer.slug}`
     : ''
 
   const handleCopyLink = async () => {
